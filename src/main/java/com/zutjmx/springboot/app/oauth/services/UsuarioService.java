@@ -18,7 +18,7 @@ import com.zutjmx.springboot.app.commons.usuarios.models.entity.Usuario;
 import com.zutjmx.springboot.app.oauth.clients.UsuarioFeignClient;
 
 @Service
-public class UsuarioService implements UserDetailsService {
+public class UsuarioService implements IUsuarioService, UserDetailsService {
 	
 	private Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 	
@@ -58,6 +58,11 @@ public class UsuarioService implements UserDetailsService {
 				true, 
 				true, 
 				authorities);
+	}
+
+	@Override
+	public Usuario findByUsername(String username) {
+		return client.findByUsername(username);
 	}
 
 }
