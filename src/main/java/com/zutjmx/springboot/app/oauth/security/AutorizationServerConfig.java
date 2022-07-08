@@ -1,6 +1,7 @@
 package com.zutjmx.springboot.app.oauth.security;
 
 import java.util.Arrays;
+import java.util.Base64;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -82,7 +83,7 @@ public class AutorizationServerConfig extends AuthorizationServerConfigurerAdapt
 	@Bean
 	public JwtAccessTokenConverter accessTokenConverter() {
 		JwtAccessTokenConverter accessTokenConverter = new JwtAccessTokenConverter();
-		accessTokenConverter.setSigningKey(environment.getProperty("config.security.oauth.jwt.key"));
+		accessTokenConverter.setSigningKey(Base64.getEncoder().encodeToString(environment.getProperty("config.security.oauth.jwt.key").getBytes()));
 		return accessTokenConverter;
 	}
 	
