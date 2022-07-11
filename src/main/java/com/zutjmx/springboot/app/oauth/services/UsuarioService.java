@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.zutjmx.springboot.app.commons.usuarios.models.entity.Usuario;
 import com.zutjmx.springboot.app.oauth.clients.UsuarioFeignClient;
 
+import brave.Tracer;
 import feign.FeignException;
 
 @Service
@@ -26,10 +27,17 @@ public class UsuarioService implements IUsuarioService, UserDetailsService {
 	
 	@Autowired
 	private UsuarioFeignClient client;
+	
+	@Autowired
+	private Tracer tracer;
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		try {
+			
+			String mensajeAuntenticado = ":: Usuario autenticado "
+					.concat(username)
+					.concat(" ::");
 			
 			Usuario usuario = client.findByUsername(username);
 			
@@ -39,9 +47,7 @@ public class UsuarioService implements IUsuarioService, UserDetailsService {
 					.peek(authority -> logger.info("Rol: ".concat(authority.getAuthority())))
 					.collect(Collectors.toList());
 			
-			logger.info(":: Usuario autenticado "
-					.concat(username)
-					.concat(" ::"));
+			logger.info(mensajeAuntenticado);
 			
 			return new User(usuario.getUsername(), 
 					usuario.getPassword(), 
@@ -52,13 +58,17 @@ public class UsuarioService implements IUsuarioService, UserDetailsService {
 					authorities);
 			
 		} catch (FeignException e) {
-			logger.error("::Error en el login, no existe el usuario "
-					.concat(username)
-					.concat(" ::"));
 			
-			throw new UsernameNotFoundException("::Error en el login, no existe el usuario "
+			String mensajeError = "::Error en el login, no existe el usuario "
 					.concat(username)
-					.concat(" ::"));
+					.concat(" ::");
+			
+			logger.error(mensajeError);
+			
+			tracer.currentSpan().tag("error.mensaje", 
+									 mensajeError.concat(" <<").concat(e.getMessage()).concat(">>"));
+			
+			throw new UsernameNotFoundException(mensajeError);
 		}
 	}
 
